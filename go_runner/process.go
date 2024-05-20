@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/parallel"
 	"github.com/ethereum/go-ethereum/triedb"
 )
 
@@ -57,12 +58,6 @@ func ReadBlockTx(block *types.Block, db ethdb.Database, cacheConfig *core.CacheC
 	}
 }
 
-// func GetTxExecContext(msg *core.Message, p *StateProcessor, block *types.Block, statedb *state.StateDB) {
-// 	//下一步如何从 Data 中获取有用信息（opcode？调用的 smart contract）
-// 	//按执行时序打印一个 Transaction 所涉及的所有 opcode
-
-// }
-
 func DoProcess() {
 
 	//读取数据库
@@ -99,15 +94,31 @@ func DoProcess() {
 		print("👎Get State fail!", err)
 	}
 
-	ReadBlockTx(block, db, core.DefaultCacheConfigWithScheme(rawdb.HashScheme))
+	//ReadBlockTx(block, db, core.DefaultCacheConfigWithScheme(rawdb.HashScheme))
 
-	// _, _, usedGas, err := bc.Processor().Process(block, stateDb, vm.Config{})
-	// if err != nil {
-	// 	print("👎Blockchain process fail!", err)
+	_, _, usedGas, err := bc.Processor().Process(block, stateDb, vm.Config{})
+	if err != nil {
+		print("👎Blockchain process fail!", err)
+	}
+	print("Gas Used: ", usedGas)
+
+	//打印Hook从程序中勾取的信息
+	print("Block Hash: ", parallel.GetBlockInfo().BlockHash)
+	print("GasLimit: ", parallel.GetBlockInfo().GasLimit)
+	for i, tx := range parallel.GetBlockInfo().Tx {
+		fmt.Printf("\n------------------------------------Transaction %d------------------------------------\n", i)
+		print("Tx Hash", tx.TxHash)
+		print("Tx From: ", tx.From)
+		print("Tx To: ", tx.To)
+		print("Tx Value: ", tx.Value)
+		print("Tx GasPrice: ", tx.GasPrice)
+		print("Tx Data: ", tx.Data)
+	}
+
+	// func GetTxExecContext(msg *core.Message, p *StateProcessor, block *types.Block, statedb *state.StateDB) {
+	// 	//下一步如何从 Data 中获取有用信息（opcode？调用的 smart contract）
+	// 	//按执行时序打印一个 Transaction 所涉及的所有 opcode
 	// }
-	// print("Gas Used: ", usedGas)
-
-	print(stateDb)
 
 }
 
