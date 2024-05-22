@@ -6,11 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/parallel"
-	"github.com/ethereum/go-ethereum/triedb"
 )
 
 // Debug print
@@ -23,40 +20,41 @@ func print(item ...interface{}) { //利用 interface{} 来传递任意参数, �
 	fmt.Print("\n")
 }
 
+//已经被 Hook 方法代替
 // 解决了问题：如何读取指定区块的信息（交易，gas等）？
 // 读取指定区块的交易信息,	并将交易转换为消息 Message
 // A Message contains the data derived from a single transaction that is relevant to state processing.
-func ReadBlockTx(block *types.Block, db ethdb.Database, cacheConfig *core.CacheConfig) {
-	print("\t\t\t\t\t\t---------------------------------------------------------------------------------------")
-	print("\t\t\t\t\t\t|                                    Read Block Tx                                    |")
-	print("\t\t\t\t\t\t---------------------------------------------------------------------------------------")
-	for i, tx := range block.Transactions() {
-		fmt.Printf("\n------------------------------------Transaction %d------------------------------------\n", i)
+// func ReadBlockTx(block *types.Block, db ethdb.Database, cacheConfig *core.CacheConfig) {
+// 	print("\t\t\t\t\t\t---------------------------------------------------------------------------------------")
+// 	print("\t\t\t\t\t\t|                                    Read Block Tx                                    |")
+// 	print("\t\t\t\t\t\t---------------------------------------------------------------------------------------")
+// 	for i, tx := range block.Transactions() {
+// 		fmt.Printf("\n------------------------------------Transaction %d------------------------------------\n", i)
 
-		//初始化一些参数
-		var genesis *core.Genesis = nil
-		triedb := triedb.NewDatabase(db, cacheConfig.TriedbConfig(genesis != nil && genesis.IsVerkle()))
-		chainConfig, _, err := core.SetupGenesisBlockWithOverride(db, triedb, genesis, nil)
-		if err != nil {
-			print("👎Fail! ", err)
-		}
+// 		//初始化一些参数
+// 		var genesis *core.Genesis = nil
+// 		triedb := triedb.NewDatabase(db, cacheConfig.TriedbConfig(genesis != nil && genesis.IsVerkle()))
+// 		chainConfig, _, err := core.SetupGenesisBlockWithOverride(db, triedb, genesis, nil)
+// 		if err != nil {
+// 			print("👎Fail! ", err)
+// 		}
 
-		//将交易转换为消息
-		signer := types.MakeSigner(chainConfig, block.Header().Number, block.Header().Time)
-		msg, err := core.TransactionToMessage(tx, signer, block.Header().BaseFee)
-		if err != nil {
-			print("👎Transaction To Message fail! ", err)
-		}
+// 		//将交易转换为消息
+// 		signer := types.MakeSigner(chainConfig, block.Header().Number, block.Header().Time)
+// 		msg, err := core.TransactionToMessage(tx, signer, block.Header().BaseFee)
+// 		if err != nil {
+// 			print("👎Transaction To Message fail! ", err)
+// 		}
 
-		//打印区块中每一笔 Transaction 的信息
-		print("Tx From: ", msg.From)
-		print("Tx To: ", msg.To)
-		print("Tx Value: ", msg.Value)
-		print("Tx GasLimit: ", msg.GasLimit)
-		print("Tx Data: ", msg.Data)
+// 		//打印区块中每一笔 Transaction 的信息
+// 		print("Tx From: ", msg.From)
+// 		print("Tx To: ", msg.To)
+// 		print("Tx Value: ", msg.Value)
+// 		print("Tx GasLimit: ", msg.GasLimit)
+// 		print("Tx Data: ", msg.Data)
 
-	}
-}
+// 	}
+// }
 
 func DoProcess() {
 
@@ -102,23 +100,25 @@ func DoProcess() {
 	}
 	print("Gas Used: ", usedGas)
 
-	//打印Hook从程序中勾取的信息
+	//打印Hook从程序中勾取的信息, 包括 contract 的调用以及执行的 opcode
 	print("Block Hash: ", parallel.GetBlockInfo().BlockHash)
 	print("GasLimit: ", parallel.GetBlockInfo().GasLimit)
 	for i, tx := range parallel.GetBlockInfo().Tx {
-		fmt.Printf("\n------------------------------------Transaction %d------------------------------------\n", i)
+		fmt.Printf("\n\n\n------------------------------------Transaction %d------------------------------------\n", i)
 		print("Tx Hash", tx.TxHash)
 		print("Tx From: ", tx.From)
 		print("Tx To: ", tx.To)
 		print("Tx Value: ", tx.Value)
 		print("Tx GasPrice: ", tx.GasPrice)
-		print("Tx Data: ", tx.Data)
+		//print("Tx Data: ", tx.Data)
+		for j, q := range tx.CallQueue {
+			fmt.Printf("\nInvoke Contract: %d\n", j+1)
+			print("Contract Address: ", q.ContractAddr)
+			print("Invoke Layer: ", q.Layer)
+			//print("Contract Last Opcode: ", q.OpcodeList[len(q.OpcodeList)-1])
+			print("Contract Opcode: ", q.OpcodeList)
+		}
 	}
-
-	// func GetTxExecContext(msg *core.Message, p *StateProcessor, block *types.Block, statedb *state.StateDB) {
-	// 	//下一步如何从 Data 中获取有用信息（opcode？调用的 smart contract）
-	// 	//按执行时序打印一个 Transaction 所涉及的所有 opcode
-	// }
 
 }
 
