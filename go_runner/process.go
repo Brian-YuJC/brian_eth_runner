@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -56,6 +59,48 @@ func print(item ...interface{}) { //利用 interface{} 来传递任意参数, �
 // 	}
 // }
 
+type hook struct {
+	Hash common.Hash `json:"hash"`
+}
+
+// 打印 Hook 信息并以 Json 形式返回
+func OutputBlockHookInfo() {
+
+	// //打印Hook从程序中勾取的信息, 包括 contract 的调用以及执行的 opcode
+	print("Block Hash: ", parallel.GetBlockInfo().BlockHash)
+	print("GasLimit: ", parallel.GetBlockInfo().GasLimit)
+	for i, tx := range parallel.GetBlockInfo().Tx {
+		fmt.Printf("\n\n\n------------------------------------Transaction %d------------------------------------\n", i)
+		print("Tx Hash", tx.TxHash)
+		print("Tx From: ", tx.From)
+		print("Tx To: ", tx.To)
+		print("Tx Value: ", tx.Value)
+		print("Tx GasPrice: ", tx.GasPrice)
+		//print("Tx Data: ", tx.Data)
+		for _, q := range tx.CallQueue {
+			//fmt.Printf("\nInvoke Contract: %d\n", j+1)
+			fmt.Print("\n")
+			print("Invoke Layer: ", q.Layer)
+			print("Contract Address: ", q.ContractAddr)
+			//print("Contract Opcode: ", q.OpcodeList)
+			for _, op := range q.KeyOpcode {
+				print("Key Opcode: ", op)
+			}
+			//print("Last Opcode: ", q.OpcodeList[len(q.OpcodeList)-1])
+		}
+	}
+
+	//	将 BlockInfo 对象转化为 Json 对象
+	jsonData, _ := json.Marshal(parallel.GetBlockInfo())
+	file, err := os.Create("./output/txLog.json") //创建输出文件
+	if err != nil {
+		print(err)
+	}
+	file.Write(jsonData)
+	defer file.Close()
+
+}
+
 func DoProcess() {
 
 	//读取数据库
@@ -76,7 +121,9 @@ func DoProcess() {
 	bc, _ := core.NewBlockChain(db, core.DefaultCacheConfigWithScheme(rawdb.HashScheme), nil, nil, ethash.NewFaker(), vm.Config{}, nil, nil)
 
 	//读取特定的区块
-	var blockNumber uint64 = 9800644
+	//var blockNumber uint64 = 9800644
+	//var blockNumber uint64 = 9833300//包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
+	var blockNumber uint64 = 9831292                              // Nice Picture
 	blockHash := rawdb.ReadCanonicalHash(db, blockNumber)         //当前选取的区块 Hash
 	parentBlockHash := rawdb.ReadCanonicalHash(db, blockNumber-1) //父区块 Hash
 	block := rawdb.ReadBlock(db, blockHash, blockNumber)
@@ -100,28 +147,13 @@ func DoProcess() {
 	}
 	print("Gas Used: ", usedGas)
 
-	//打印Hook从程序中勾取的信息, 包括 contract 的调用以及执行的 opcode
-	print("Block Hash: ", parallel.GetBlockInfo().BlockHash)
-	print("GasLimit: ", parallel.GetBlockInfo().GasLimit)
-	for i, tx := range parallel.GetBlockInfo().Tx {
-		fmt.Printf("\n\n\n------------------------------------Transaction %d------------------------------------\n", i)
-		print("Tx Hash", tx.TxHash)
-		print("Tx From: ", tx.From)
-		print("Tx To: ", tx.To)
-		print("Tx Value: ", tx.Value)
-		print("Tx GasPrice: ", tx.GasPrice)
-		//print("Tx Data: ", tx.Data)
-		for j, q := range tx.CallQueue {
-			fmt.Printf("\nInvoke Contract: %d\n", j+1)
-			print("Contract Address: ", q.ContractAddr)
-			print("Invoke Layer: ", q.Layer)
-			//print("Contract Last Opcode: ", q.OpcodeList[len(q.OpcodeList)-1])
-			print("Contract Opcode: ", q.OpcodeList)
-		}
-	}
-
+	OutputBlockHookInfo()
 }
 
 func main() {
+	fmt.Print("\n\nDoProcess()\n")
 	DoProcess()
+	fmt.Print("\n\nGetGraphDemo()\n")
+	GetGraphDemo("/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	//tableTest()
 }
