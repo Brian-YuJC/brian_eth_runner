@@ -169,6 +169,7 @@ func main() {
 
 	fmt.Print("BuildGraph()\n")
 	var graph *parallel.Graph = parallel.BuildGraph()
-	GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	//GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	GetGraph_RelatedAccount(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
 	fmt.Print("\n\n")
 }
