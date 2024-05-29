@@ -1,5 +1,10 @@
 package main
 
+//--------------------------------------------------
+//本文件直接使用 Hook 的数据（blockInfo）生成读写关系图
+//运行完 DoProcess 后调用GetGraphDemo
+//--------------------------------------------------
+
 import (
 	"fmt"
 	"strconv"
@@ -233,7 +238,7 @@ func GetGraphDemo(path string, fileName string) {
 		}
 	}
 
-	//让 Transaction 按顺序连接
+	//让 Transaction 按顺序连接(即 Transaction 图节点之间用箭头顺序连接)
 	// for i := 0; i < len(blockInfo.Tx)-1; i++ {
 	// 	fromPort := "port_tx" + fmt.Sprintf("%d", i)
 	// 	toPort := "port_tx" + fmt.Sprintf("%d", i+1)

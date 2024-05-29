@@ -101,6 +101,7 @@ func OutputBlockHookInfo() {
 
 }
 
+// 从一个区块执行前的全局状态模拟执行一个区块
 func DoProcess() {
 
 	//读取数据库
@@ -122,8 +123,8 @@ func DoProcess() {
 
 	//读取特定的区块
 	//var blockNumber uint64 = 9800644
-	var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
-	//var blockNumber uint64 = 9831292                              // Nice Picture
+	//var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
+	var blockNumber uint64 = 9831292                              // Nice Picture
 	blockHash := rawdb.ReadCanonicalHash(db, blockNumber)         //当前选取的区块 Hash
 	parentBlockHash := rawdb.ReadCanonicalHash(db, blockNumber-1) //父区块 Hash
 	block := rawdb.ReadBlock(db, blockHash, blockNumber)
@@ -147,13 +148,27 @@ func DoProcess() {
 	}
 	print("Gas Used: ", usedGas)
 
-	//OutputBlockHookInfo()
+	OutputBlockHookInfo()
+}
+
+// 测试函数
+func TestGetRelationship() {
+
 }
 
 func main() {
-	fmt.Print("\n\nDoProcess()\n")
+	fmt.Print("DoProcess()\n")
 	DoProcess()
-	fmt.Print("\n\nGetGraphDemo()\n")
-	GetGraphDemo("/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
-	//tableTest()
+	fmt.Print("\n\n")
+
+	// fmt.Print("\n\nGetGraphDemo()\n")
+	// GetGraphDemo("/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+
+	// fmt.Print("\n\nOutputGraph()\n")
+	// parallel.OutputGraph()
+
+	fmt.Print("BuildGraph()\n")
+	var graph *parallel.Graph = parallel.BuildGraph()
+	GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	fmt.Print("\n\n")
 }
