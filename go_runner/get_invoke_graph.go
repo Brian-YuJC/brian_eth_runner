@@ -90,7 +90,7 @@ func GetGraphDemo(path string, fileName string) {
 		//设置 From To Value的cell
 		row2 := TableRow{}
 		from := tx.From.Hex()
-		to := tx.To.Hex()
+		to := tx.To
 		value := tx.Value.String()
 
 		txInfoCell := TableCell{Content: "<b>From: </b>" + from + "<br/>" + "<b>To: </b>" + to + "<br/><b>Value: </b>" + value}
@@ -110,20 +110,25 @@ func GetGraphDemo(path string, fileName string) {
 		//维护一个箭头表（address->read or write）,在表上就说明Transaction读或写了此账户(bool1:isRead? bool2:isWrite? bool3:isCreate?)
 		edgeMap := make(map[string][3]bool)
 
-		// if tx.To == nil { //为创建合约的特殊情况
-
-		// }
-		addAccountNode(from, &graph)               //画上 from 节点
-		addAccountNode(to, &graph)                 //画上 to 节点
-		txPort := "port_tx" + fmt.Sprintf("%d", i) //Transaction 的图像节点标识符
+		//Transaction 的图像节点标识符
+		txPort := "port_tx" + fmt.Sprintf("%d", i)
 
 		//Transaction调用的第一个地址From，肯定会读取和改变其 Nonce 所以有依赖关系
+		addAccountNode(from, &graph)               //画上 from 节点
 		edgeMap[from] = [3]bool{true, true, false} //添加进箭头表
 
-		//如果调用列表是空的说明没有进行调用，单纯进行转账操作
-		if tx.Value.Sign() > 0 { //	value > 0 需要转账
+		//处理创建合约的特殊情况
+		if tx.To == "nil" {
+			addAccountNode(tx.NewContractAddr.Hex(), &graph)
+			edgeMap[tx.NewContractAddr.Hex()] = [3]bool{false, false, true}
+		}
+
+		//不管有无调用其他合约，只要 Transaction 的 value 不为空就会进行转账操作(创建合约的情况前面处理过了)
+		if tx.Value.Sign() > 0 && tx.To != "nil" { //	value > 0 需要转账
+			addAccountNode(to, &graph) //画上 to 节点
 			edgeMap[to] = [3]bool{true, true, false}
 		}
+
 		if len(tx.CallQueue) > 0 { //有合约调用情况
 
 			for _, contractInfo := range tx.CallQueue { //进入每个调用过程的循环，如果调用的合约有对自身的读写操作，则 tx 图像实例直接指向它
