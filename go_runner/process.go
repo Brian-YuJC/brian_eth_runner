@@ -123,8 +123,9 @@ func DoProcess() {
 
 	//读取特定的区块
 	//var blockNumber uint64 = 9800644
-	var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
+	//var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
 	//var blockNumber uint64 = 9831292                              // Nice Picture
+	var blockNumber uint64 = 9898821
 	blockHash := rawdb.ReadCanonicalHash(db, blockNumber)         //当前选取的区块 Hash
 	parentBlockHash := rawdb.ReadCanonicalHash(db, blockNumber-1) //父区块 Hash
 	block := rawdb.ReadBlock(db, blockHash, blockNumber)
@@ -168,7 +169,10 @@ func main() {
 	// GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
 	// fmt.Print("\n\n")
 
-	fmt.Print("BuildGraph()\n")
+	fmt.Print("BuildTxRelationGraph()\n")
 	parallel.BuildTxRelationGraph()
+	//打印每个交易的运行时间
+	//print("SpeedUp: ", speedup)
 	fmt.Print("\n\n")
+
 }
