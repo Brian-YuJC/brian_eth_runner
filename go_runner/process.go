@@ -123,8 +123,8 @@ func DoProcess() {
 
 	//读取特定的区块
 	//var blockNumber uint64 = 9800644
-	//var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
-	var blockNumber uint64 = 9831292                              // Nice Picture
+	var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
+	//var blockNumber uint64 = 9831292                              // Nice Picture
 	blockHash := rawdb.ReadCanonicalHash(db, blockNumber)         //当前选取的区块 Hash
 	parentBlockHash := rawdb.ReadCanonicalHash(db, blockNumber-1) //父区块 Hash
 	block := rawdb.ReadBlock(db, blockHash, blockNumber)
@@ -148,12 +148,7 @@ func DoProcess() {
 	}
 	print("Gas Used: ", usedGas)
 
-	OutputBlockHookInfo()
-}
-
-// 测试函数
-func TestGetRelationship() {
-
+	//OutputBlockHookInfo()
 }
 
 func main() {
@@ -167,9 +162,13 @@ func main() {
 	// fmt.Print("\n\nOutputGraph()\n")
 	// parallel.OutputGraph()
 
+	// fmt.Print("BuildGraph()\n")
+	// var graph *parallel.Graph = parallel.BuildDependencyGraph()
+	// //GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	// GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	// fmt.Print("\n\n")
+
 	fmt.Print("BuildGraph()\n")
-	var graph *parallel.Graph = parallel.BuildGraph()
-	//GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
-	GetGraph_RelatedAccount(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	parallel.BuildTxRelationGraph()
 	fmt.Print("\n\n")
 }

@@ -31,6 +31,7 @@ func addEdge2Graph(from string, to string, lineType string, label string, color 
 	graph.AddEdge(edge)
 }
 
+// 根据返回的关系图的点和边的信息画图
 func GetGraphFromRelationship(g *parallel.Graph, path string, fileName string) {
 	//获取图的节点和边的信息
 	txList := g.TxNodeList
@@ -111,51 +112,51 @@ func GetGraphFromRelationship(g *parallel.Graph, path string, fileName string) {
 
 }
 
-// 只画出关联两个以上 Transaction 的 Account
-func GetGraph_RelatedAccount(g *parallel.Graph, path string, fileName string) {
+// // 只画出关联两个以上 Transaction 的 Account
+// func GetGraph_RelatedAccount(g *parallel.Graph, path string, fileName string) {
 
-	//获取图的节点和边的信息
-	txList := g.TxNodeList
-	accountNodeList := g.AccountNodeList
-	edgeList := g.EdgeList
+// 	//获取图的节点和边的信息
+// 	txList := g.TxNodeList
+// 	accountNodeList := g.AccountNodeList
+// 	edgeList := g.EdgeList
 
-	//维护一个Account 和 Transaction 关连的 Map
-	accountTxMap := make(map[string]map[string]bool)
+// 	//维护一个Account 和 Transaction 关连的 Map
+// 	accountTxMap := make(map[string]map[string]bool)
 
-	//初始化 Map
-	for _, account := range accountNodeList {
-		accountTxMap[account.Address] = make(map[string]bool)
-	}
+// 	//初始化 Map
+// 	for _, account := range accountNodeList {
+// 		accountTxMap[account.Address] = make(map[string]bool)
+// 	}
 
-	//如果一个 Transaction 指向一个 Account，那么这个 Transaction 与这个 Account 有关连，加入 Map
-	for _, edge := range edgeList {
-		from := edge.From
-		to := edge.To
-		accountTxMap[to][from] = true
-	}
+// 	//如果一个 Transaction 指向一个 Account，那么这个 Transaction 与这个 Account 有关连，加入 Map
+// 	for _, edge := range edgeList {
+// 		from := edge.From
+// 		to := edge.To
+// 		accountTxMap[to][from] = true
+// 	}
 
-	//根据 Transaction 和 Account 的关连 Map，只保留与多个 Transaction 相连的 Account
-	newAccountNodeList := []parallel.AccountNode{}
-	for _, account := range accountNodeList {
-		if len(accountTxMap[account.Address]) > 1 { //说明 Account 与多个 Transaction 有关连
-			newAccountNodeList = append(newAccountNodeList, account)
-		}
-	}
+// 	//根据 Transaction 和 Account 的关连 Map，只保留与多个 Transaction 相连的 Account
+// 	newAccountNodeList := []parallel.AccountNode{}
+// 	for _, account := range accountNodeList {
+// 		if len(accountTxMap[account.Address]) > 1 { //说明 Account 与多个 Transaction 有关连
+// 			newAccountNodeList = append(newAccountNodeList, account)
+// 		}
+// 	}
 
-	//根据 Transaction 和 Account 的关连 Map，只保留与多个 Transaction 相连的 Account 有关的边
-	newEdgeList := []parallel.Edge{}
-	for _, edge := range edgeList {
-		if len(accountTxMap[edge.To]) > 1 { //说明Edge的 Account 与多个 Transaction 有关连
-			newEdgeList = append(newEdgeList, edge)
-		}
-	}
+// 	//根据 Transaction 和 Account 的关连 Map，只保留与多个 Transaction 相连的 Account 有关的边
+// 	newEdgeList := []parallel.Edge{}
+// 	for _, edge := range edgeList {
+// 		if len(accountTxMap[edge.To]) > 1 { //说明Edge To的 Account 与多个 Transaction 有关连，影响并行，需要保留这条边
+// 			newEdgeList = append(newEdgeList, edge)
+// 		}
+// 	}
 
-	//构成新的关系图
-	newGraph := parallel.Graph{}
-	newGraph.TxNodeList = txList
-	newGraph.AccountNodeList = newAccountNodeList
-	newGraph.EdgeList = newEdgeList
+// 	//构成新的关系图
+// 	newGraph := parallel.Graph{}
+// 	newGraph.TxNodeList = txList
+// 	newGraph.AccountNodeList = newAccountNodeList
+// 	newGraph.EdgeList = newEdgeList
 
-	//根据新关系图绘制图片
-	GetGraphFromRelationship(&newGraph, path, fileName)
-}
+// 	//根据新关系图绘制图片
+// 	GetGraphFromRelationship(&newGraph, path, fileName)
+// }
