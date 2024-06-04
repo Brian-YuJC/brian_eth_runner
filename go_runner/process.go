@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
@@ -102,7 +105,7 @@ func OutputBlockHookInfo() {
 }
 
 // 从一个区块执行前的全局状态模拟执行一个区块
-func DoProcess() {
+func DoProcess(blockNumber uint64) {
 
 	//读取数据库
 	chainDataDir := "/home/user/common/docker/volumes/cp1_eth-docker_geth-eth1-data/_data/geth/chaindata"
@@ -114,6 +117,7 @@ func DoProcess() {
 			Ephemeral:         true,
 		},
 	)
+	defer db.Close() //这句很必要，因为如果连续调用 DoProcess 函数不释放 db 资源的话会有锁读取不了
 	if err != nil {
 		print("👎Open rawdb fail!", err)
 	}
@@ -125,7 +129,7 @@ func DoProcess() {
 	//var blockNumber uint64 = 9800644
 	//var blockNumber uint64 = 9833300 //包含创建合约的 Transaction (TODO:需要特殊处理不然报错)
 	//var blockNumber uint64 = 9831292                              // Nice Picture
-	var blockNumber uint64 = 9898821
+	//var blockNumber uint64 = 9898821
 	blockHash := rawdb.ReadCanonicalHash(db, blockNumber)         //当前选取的区块 Hash
 	parentBlockHash := rawdb.ReadCanonicalHash(db, blockNumber-1) //父区块 Hash
 	block := rawdb.ReadBlock(db, blockHash, blockNumber)
@@ -150,12 +154,76 @@ func DoProcess() {
 	print("Gas Used: ", usedGas)
 
 	//OutputBlockHookInfo()
+
+}
+
+// 输出100个块的平均并行加速比
+func OutputAverageSpeedUp() {
+	readFile, err := os.Open("block_range.csv")
+	if err != nil {
+		print(err)
+	}
+	defer readFile.Close()
+
+	writeFile, err := os.Create("./output/SpeedUp.txt")
+	if err != nil {
+		print(err)
+	}
+	defer writeFile.Close()
+
+	//存放块号和并行执行时间的映射
+	//block_speedup_mapmap := make(map[uint64]float64)
+	loopCnt := 5 //每个块重复执行几次取平均
+	var averageSpeedup float64 = 0.0
+
+	csvReader := csv.NewReader(readFile)
+	blockList, err := csvReader.ReadAll()
+
+	blockCnt := len(blockList) //区块的总数
+	legalBlockCnt := 0         //和法 Block 的数量（因为有的 Block 里面没有 Transaction 无法计算时间）
+
+	if err != nil {
+		print(err)
+	}
+	for i := 0; i < blockCnt; i++ {
+		blockNumber, err := strconv.ParseUint(blockList[i][0], 10, 64)
+		if err != nil {
+			print(err)
+		}
+
+		var blockAvgSpeedUp float64 = 0.0
+		for i := 0; i < loopCnt; i++ {
+			DoProcess(blockNumber)
+			_, _, speedup := parallel.BuildTxRelationGraph()
+			blockAvgSpeedUp += speedup / float64(loopCnt)
+		}
+
+		//block_speedup_mapmap[blockNumber] = blockAvgSpeedUp
+		if !math.IsNaN(blockAvgSpeedUp) { //如果能计算时间则该块和法
+			legalBlockCnt++
+			averageSpeedup += blockAvgSpeedUp
+		}
+		fmt.Fprintln(writeFile, "[ Block", i, "]  Block number:", blockNumber, " Block average speedup:", blockAvgSpeedUp)
+
+	}
+
+	averageSpeedup /= float64(legalBlockCnt)
+	fmt.Fprintln(writeFile, "Legal Block Count:", legalBlockCnt)
+	fmt.Fprintln(writeFile, "Average Speedup:", averageSpeedup)
+
 }
 
 func main() {
-	fmt.Print("DoProcess()\n")
-	DoProcess()
-	fmt.Print("\n\n")
+
+	// 重定向输出，不在命令行打印
+	var noPrint = true
+	if noPrint {
+		os.Stdout = nil
+	}
+
+	// fmt.Print("DoProcess()\n")
+	// DoProcess(9885396)
+	// fmt.Print("\n\n")
 
 	// fmt.Print("\n\nGetGraphDemo()\n")
 	// GetGraphDemo("/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
@@ -169,10 +237,12 @@ func main() {
 	// GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
 	// fmt.Print("\n\n")
 
-	fmt.Print("BuildTxRelationGraph()\n")
-	parallel.BuildTxRelationGraph()
-	//打印每个交易的运行时间
-	//print("SpeedUp: ", speedup)
-	fmt.Print("\n\n")
+	// fmt.Print("BuildTxRelationGraph()\n")
+	// _, _, speedUp := parallel.BuildTxRelationGraph()
+	// //打印每个交易的运行时间
+	// print("SpeedUp: ", speedUp)
+	// fmt.Print("\n\n")
+
+	OutputAverageSpeedUp()
 
 }
