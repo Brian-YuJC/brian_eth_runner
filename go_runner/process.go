@@ -216,33 +216,52 @@ func OutputAverageSpeedUp() {
 func main() {
 
 	// 重定向输出，不在命令行打印
-	var noPrint = true
+	var noPrint = false //为 true 则不打印
 	if noPrint {
 		os.Stdout = nil
 	}
 
+	// 运行一个区块的函数，让区块执行一遍获取运行的 opcode 等信息
+	fmt.Print("DoProcess()\n")
+	DoProcess(9833300)
+	fmt.Print("\n\n")
+
+	// 获取 Transaction 和 Account 之间的关系图
+	// go run process.go graph_utils.go get_invoke_graph.go
 	// fmt.Print("DoProcess()\n")
-	// DoProcess(9885396)
-	// fmt.Print("\n\n")
-
+	// DoProcess(9833300)
 	// fmt.Print("\n\nGetGraphDemo()\n")
-	// GetGraphDemo("/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	// GetGraphDemo("/home/user/data/Brian/brian_eth_runner/go_runner/output", "GetGraphDemo")
 
+	// 将 Graph 导出为 Json 格式
+	// go run process.go graph_utils.go get_invoke_graph.go
+	// fmt.Print("DoProcess()\n")
+	// DoProcess(9833300)
 	// fmt.Print("\n\nOutputGraph()\n")
-	// parallel.OutputGraph()
+	// parallel.OutputGraph("./output", "relationshipGraph.json")
 
+	// 画出会导致冲突的 Account 和 Transaction 的关系
+	// go run process.go graph_utils.go get_relationship_graph.go
+	// fmt.Print("DoProcess()\n")
+	// DoProcess(9833300)
 	// fmt.Print("BuildGraph()\n")
+	// // 只保留会导致Transaction并行冲突的 Account（如果一个 Account 与两个 Transaction 关连则需保留这个节点）
 	// var graph *parallel.Graph = parallel.BuildDependencyGraph()
-	// //GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
-	// GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "demo")
+	// // 根据返回的关系图的点和边的信息画图
+	// GetGraphFromRelationship(graph, "/home/user/data/Brian/brian_eth_runner/go_runner/output", "GetGraphFromRelationship")
 	// fmt.Print("\n\n")
 
+	// 打印一个交易的并行度信息
+	// go run process.go
+	// fmt.Print("DoProcess()\n")
+	// DoProcess(9833300)
 	// fmt.Print("BuildTxRelationGraph()\n")
-	// _, _, speedUp := parallel.BuildTxRelationGraph()
+	// /*_, _, speedUp := */ parallel.BuildTxRelationGraph()
 	// //打印每个交易的运行时间
-	// print("SpeedUp: ", speedUp)
+	// //print("SpeedUp: ", speedUp)
 	// fmt.Print("\n\n")
 
-	OutputAverageSpeedUp()
+	// 根据文件block_range.csv 输出100个块的平均并行加速比
+	//OutputAverageSpeedUp()
 
 }
